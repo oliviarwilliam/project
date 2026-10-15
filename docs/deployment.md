@@ -14,7 +14,7 @@ Fix whatever these find. This is the first time the code is compiled, so expect 
 
 ## 2. Supabase
 1. Create the project. Pick the region nearest your members. Save the database password somewhere safe.
-2. Apply the migrations **in order** (`supabase/migrations/0001` to `0017`).
+2. Apply the migrations **in order** (`supabase/migrations/0001` to the latest migration in `supabase/migrations`).
    - CLI: `supabase login`, `supabase link --project-ref YOUR_REF`, `supabase db push`.
    - Or paste each file into the SQL editor, one at a time, in number order.
 3. Database, Extensions: enable `pg_cron` (daily earnings). If your plan cannot, keep the `teenvest-daily-earnings` job in `render.yaml`.

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdjustWalletForm } from "@/components/admin/adjust-wallet-form";
+import { DeleteUserAction } from "@/components/admin/delete-user-action";
 import { UserStatusActions } from "@/components/admin/user-status-actions";
 import { Card, PageHeader, StatusBadge, cx } from "@/components/dashboard/ui";
 import { TXN_LABELS, TransactionList } from "@/components/dashboard/transaction-list";
@@ -59,11 +60,11 @@ export default async function AdminUserPage({ params, searchParams }: Props) {
               {row("Joined", shortDate(user.created_at))}
               {row("Phone", user.phone ?? "Not set")}
               {row("Date of birth", user.date_of_birth ? shortDate(user.date_of_birth) : "Not set")}
-              {row("Guardian consent", user.guardian_consent_at ? shortDate(user.guardian_consent_at) : "None")}
               {row("Bank", user.bank_name ? `${user.bank_name} •••• ${user.account_last4}` : "Not set")}
               {row("Active packages", String(detail.active_packages))}
             </dl>
             {canManage && <div className="mt-5 border-t border-line pt-5"><UserStatusActions userId={user.id} status={user.status} /></div>}
+            {canManage && !detail.is_admin && <div className="mt-5 border-t border-line pt-5"><DeleteUserAction userId={user.id} /></div>}
             {isSelf && <p className="mt-4 text-xs text-muted">This is your own account.</p>}
           </Card>
 

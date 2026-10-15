@@ -14,7 +14,7 @@ Not ready to take real money yet. The code has **never been compiled or run**: t
 | 6 | Money kill switch | `PAYSTACK_TRANSFERS_ENABLED` existed but was never checked, so automatic payouts would run regardless. | High | Fixed. Now enforced. Default off. |
 | 7 | Database privileges | Function execute rights depended on each migration remembering to revoke them. | Medium | Fixed. Migration 0017 revokes for all definer functions, locks future ones, and re-enables row level security on any table that lacks it. |
 | 8 | Security headers | No CSP or HSTS. | Medium | Fixed. CSP with per-request nonce, HSTS, COOP, strict permissions policy. CSP starts in report-only. |
-| 9 | Audit trail | No IP or browser, no sign-in events, bank detail edits not recorded. | Medium | Fixed. `audit_request`, login/password/profile events, trigger on bank, date of birth and consent changes. TRUNCATE blocked on ledger and audit tables. |
+| 9 | Audit trail | No IP or browser, no sign-in events, bank detail edits not recorded. | Medium | Fixed. `audit_request`, login/password/profile events, and triggers on bank detail and date of birth changes. TRUNCATE blocked on ledger and audit tables. |
 | 10 | Withdrawal fraud | A stolen session can change bank details then withdraw. | Medium | Partly fixed (audit and "bank details changed" alert to the member). **Open:** add a waiting period or re-authentication after a bank change. |
 | 11 | Client address | Rate limits need the real client IP, which depends on the proxy. | Medium | Needs a check after deploy (`TRUSTED_PROXY_HOPS`, `CLIENT_IP_HEADER`). |
 | 12 | Operations | No health check, startup config check, error pages or robots rules. | Medium | Fixed. |

@@ -5,6 +5,7 @@ import {
 } from "@/services/wallet/validation";
 import * as repo from "./admin.repository";
 import type { AuditEntry, Financials, FinancialDay, Overview, UserDetail, UserListItem, WalletTransaction } from "./types";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const invalid = (message: string) => new WalletError("VALIDATION_ERROR", message);
 const money = (n: number) => Math.round(n * 100) / 100;
@@ -71,6 +72,40 @@ export async function reactivateUser(adminId: string, id: unknown) {
   if (!signInRestored) logger.error("user.reactivate.unban_failed", { userId, adminId });
   logger.info("user.reactivated", { userId, adminId });
   return { ...result, signInRestored };
+}
+
+export async function deleteUser(adminId: string, id: unknown) {
+  const userId = parseUuid(id, "id");
+  const target = await repo.assertUserCanBeDeleted(adminId, userId);
+  const auth = createAdminClient().auth.admin;
+  const { data, error: lookupError } = await auth.getUserById(userId);
+  if (lookupError || !data.user) throw new WalletError("USER_NOT_FOUND");
+
+  const old = data.user;
+  const oldBanUntil = old.banned_until ? Date.parse(old.banned_until) : 0;
+  const priorBan = oldBanUntil > Date.now() ? `${Math.max(1, Math.ceil((oldBanUntil - Date.now()) / 3_600_000))}h` : "none";
+  const { error: disableError } = await auth.updateUserById(userId, {
+    email: `deleted+${userId}@redacted.invalid`,
+    phone: "",
+    user_metadata: {},
+    ban_duration: "876000h",
+  });
+  if (disableError) throw new WalletError("INTERNAL_ERROR", "Could not disable sign-in for this account.");
+
+  try {
+    const result = await repo.deleteUser(adminId, userId);
+    logger.info("user.deleted", { userId, adminId });
+    return result;
+  } catch (error) {
+    const { error: restoreError } = await auth.updateUserById(userId, {
+      email: old.email,
+      phone: old.phone ?? "",
+      user_metadata: old.user_metadata ?? {},
+      ban_duration: priorBan,
+    });
+    if (restoreError) logger.error("user.delete.rollback_failed", { userId, adminId, message: restoreError.message, status: target.status });
+    throw error;
+  }
 }
 
 // ---- Audit logs ----

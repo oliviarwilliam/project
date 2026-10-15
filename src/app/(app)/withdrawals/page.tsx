@@ -13,7 +13,6 @@ const BLOCKED: Record<string, string> = {
   ACCOUNT_RESTRICTED: "Your account cannot make withdrawals right now.",
   MAINTENANCE_MODE: "Withdrawals are paused for maintenance. Try again later.",
   PROFILE_INCOMPLETE: "Add your date of birth in your profile before withdrawing.",
-  GUARDIAN_CONSENT_REQUIRED: "A parent or guardian must approve your account before you can withdraw.",
   REFERRALS_REQUIRED: "Refer 10 people who verify their email before requesting a withdrawal.",
   NO_PROFIT_AVAILABLE: "You do not have enough profit to withdraw yet. Only profit can be withdrawn.",
 };

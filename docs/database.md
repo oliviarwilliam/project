@@ -86,7 +86,7 @@ erDiagram
 
 | Table | Main checks |
 | --- | --- |
-| users | username format, date of birth range, uppercase country code, guardian consent needs a guardian email |
+| users | username format, date of birth range, uppercase country code |
 | wallets | balance >= 0, uppercase currency, one wallet per currency per user |
 | packages | price > 0, rate between 0 and 1, positive interval, duration >= interval, slug format |
 | wallet_transactions | amount > 0, balance_after >= 0, type must match direction, reference type and id set together, unique idempotency key |

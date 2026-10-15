@@ -1,6 +1,6 @@
 # TeenVest
 
-A savings and investing education platform for teenagers. Members fund a wallet, buy packages that pay a daily profit, and withdraw their profit with admin approval. Parents or guardians give consent for under-18 members. Admins manage users, packages, withdrawals and rules from a built-in console.
+A savings and investing education platform for teenagers. Members fund a wallet, buy packages that pay a daily profit, and withdraw their profit with admin approval. Admins manage users, packages, withdrawals and rules from a built-in console.
 
 > **Status: not yet compiled or run.** This code was written without access to `npm`, a database or Paystack, so the first build on your machine will probably need a few fixes. Follow "Quick start", fix what the type check finds, then work through `docs/security-checklist.md` before any real money is involved. Real money from minors also needs legal advice (securities, consumer protection, child protection, data protection).
 
@@ -158,10 +158,10 @@ Then as admin open `/admin/settings` and press **Run now** under Daily earnings.
 ### Withdraw
 Withdrawals have rules, so a fresh member is blocked until:
 1. They have **profit** (only profit can be withdrawn, not deposits). Use the step above.
-2. They have a **date of birth**, and for under 18 a guardian consent date. Set both by SQL for testing:
+2. They have a **date of birth**. Set it by SQL for testing:
    ```sql
    update public.users
-      set date_of_birth = '2000-01-01', guardian_consent_at = now(), guardian_email = 'parent@example.com'
+      set date_of_birth = '2000-01-01'
     where email = 'member@example.com';
    ```
 3. They saved bank details at `/profile`.
@@ -366,7 +366,7 @@ Use `logger.info("event.name", { ...fields })` from `src/lib/logger.ts`. It prin
 | Redirect loop between `/login` and `/dashboard` | Cookies are blocked or `NEXT_PUBLIC_SITE_URL` does not match the address in your browser. |
 | Confirmation email never arrives | Free Supabase projects have a low email limit. Use custom SMTP, or the local Docker stack and its mail inbox. |
 | `permission denied for function ...` | A client tried to call a locked database function. Call it from server code with the service role instead. |
-| "Add your date of birth" on withdrawals | Set `date_of_birth` (and guardian consent for under 18) with the SQL in "Withdraw". |
+| "Add your date of birth" on withdrawals | Set `date_of_birth` with the SQL in "Withdraw". |
 | Withdrawal says "You do not have enough profit" | Only profit is withdrawable. Pay a day of profit first. |
 | Wallet funded on Paystack but balance did not change | Open `/wallet/fund/callback?reference=<ref>` to force a check, and read the server log for `payment` lines. Webhooks need a public URL. |
 | Daily earnings never run | `pg_cron` may be off. Press Run now in `/admin/settings`, or use the Render cron job. |

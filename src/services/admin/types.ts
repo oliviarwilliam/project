@@ -42,7 +42,7 @@ export interface UserDetail {
   user: {
     id: string; email: string; full_name: string | null; phone: string | null;
     status: "active" | "suspended" | "closed"; date_of_birth: string | null;
-    guardian_consent_at: string | null; created_at: string; bank_name: string | null; account_last4: string | null;
+    created_at: string; bank_name: string | null; account_last4: string | null;
   };
   is_admin: boolean;
   wallets: { id: string; currency: string; balance: number }[];

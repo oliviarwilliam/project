@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { fromDbError } from "@/services/wallet/errors";
+import { fromDbError, WalletError } from "@/services/wallet/errors";
 import type { WalletTransaction } from "@/services/wallet";
 import type { Overview, UserDetail, UserListItem } from "./types";
 
@@ -31,6 +31,26 @@ export const setUserStatus = (adminId: string, userId: string, status: "active" 
   rpc<{ id: string; status: string; changed: boolean }>("admin_set_user_status", {
     p_admin_id: adminId, p_user_id: userId, p_status: status, p_reason: reason,
   });
+
+export const deleteUser = (adminId: string, userId: string) =>
+  rpc<{ id: string; deleted: boolean }>("admin_delete_user", { p_admin_id: adminId, p_user_id: userId });
+
+export async function assertUserCanBeDeleted(adminId: string, userId: string) {
+  const client = db();
+  const [actor, target, targetAdmin] = await Promise.all([
+    client.from("admin_users").select("user_id").eq("id", adminId).eq("is_active", true).is("deleted_at", null).maybeSingle(),
+    client.from("users").select("status").eq("id", userId).is("deleted_at", null).maybeSingle(),
+    client.from("admin_users").select("id").eq("user_id", userId).eq("is_active", true).is("deleted_at", null).maybeSingle(),
+  ]);
+  if (actor.error) throw fromDbError(actor.error);
+  if (target.error) throw fromDbError(target.error);
+  if (targetAdmin.error) throw fromDbError(targetAdmin.error);
+  if (!actor.data) throw new WalletError("NOT_AUTHORIZED");
+  if (actor.data.user_id === userId) throw new WalletError("CANNOT_MODIFY_SELF");
+  if (targetAdmin.data) throw new WalletError("USER_IS_ADMIN");
+  if (!target.data) throw new WalletError("USER_NOT_FOUND");
+  return target.data as { status: "active" | "suspended" | "closed" };
+}
 
 export const auditLogs = (action: string | null, limit: number, before: { createdAt: string; id: string } | null) =>
   rpc<Record<string, any>[]>("admin_audit_logs", {

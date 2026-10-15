@@ -48,11 +48,11 @@ Reads run as the signed in member, so row level security applies. Writes call da
 
 Purchase, withdrawal and adjustment calls need an `Idempotency-Key` header. Generate one id per user action and reuse it on retries.
 
-Responses are `{ "data": ... }` or `{ "error": { "code", "message" } }`. Error codes include `INSUFFICIENT_FUNDS`, `BELOW_MIN_WITHDRAWAL`, `PACKAGE_LIMIT_REACHED`, `GUARDIAN_CONSENT_REQUIRED` and `MAINTENANCE_MODE`.
+Responses are `{ "data": ... }` or `{ "error": { "code", "message" } }`. Error codes include `INSUFFICIENT_FUNDS`, `BELOW_MIN_WITHDRAWAL`, `PACKAGE_LIMIT_REACHED`, `REFERRALS_REQUIRED` and `MAINTENANCE_MODE`.
 
 ## Rules worth knowing
 
 - A withdrawal debits the wallet straight away and creates a `pending` request. The fee is stored on the request and taken from the payout, not added to the debit.
-- Withdrawals need a date of birth, and guardian consent for members under the age in the `guardian_consent_under_age` setting.
+- Withdrawals need a date of birth and at least 10 qualified referrals.
 - A profit credit pays `amount x return_rate` once per payout interval. A package completes when the next payout would fall after its end date.
 - Withdrawal rules and admin review are in `docs/withdrawals.md`.

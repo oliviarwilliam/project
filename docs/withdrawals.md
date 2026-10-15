@@ -15,7 +15,7 @@ All of this is one database transaction.
 | Once every 7 days | No other request (not rejected or cancelled) in the last `withdrawal_cooldown_days`. Gives `WITHDRAWAL_COOLDOWN`. The wallet lock stops two requests sent at once from both passing. |
 | Admin approval required | Status starts `pending`. Only `withdrawal_review` (approve or reject) and `withdrawal_mark_paid` move it on, and only finance staff and admins can call them. |
 | Minimum configurable | `min_withdrawal_amount` setting. Below it gives `BELOW_MIN_WITHDRAWAL`. |
-| Also checked | Account active, not in maintenance mode, date of birth set, guardian consent for members under the set age. |
+| Also checked | Account active, not in maintenance mode, date of birth set, and the referral requirement. |
 
 ## Settings (admin)
 `PATCH /api/admin/settings/withdrawals` with any of `minWithdrawalAmount`, `withdrawalCooldownDays` (0 to 90, 0 turns the limit off), `withdrawalFeePercent` (0 to 50). Changes are range checked and audited. `GET` returns the current values.
@@ -33,7 +33,7 @@ All of this is one database transaction.
 | GET, PATCH `/api/admin/settings/withdrawals` | Admin | Read or change the rules |
 
 ## Errors
-`{ "error": { "code", "message" } }`. Codes: `EXCEEDS_PROFIT_BALANCE`, `WITHDRAWAL_COOLDOWN`, `BELOW_MIN_WITHDRAWAL`, `PROFILE_INCOMPLETE`, `GUARDIAN_CONSENT_REQUIRED`, `ACCOUNT_RESTRICTED`, `MAINTENANCE_MODE`, `WITHDRAWAL_NOT_FOUND`, `WITHDRAWAL_NOT_PENDING`, `WITHDRAWAL_NOT_APPROVED`, `REASON_REQUIRED`, plus the wallet codes.
+`{ "error": { "code", "message" } }`. Codes: `EXCEEDS_PROFIT_BALANCE`, `WITHDRAWAL_COOLDOWN`, `BELOW_MIN_WITHDRAWAL`, `PROFILE_INCOMPLETE`, `REFERRALS_REQUIRED`, `ACCOUNT_RESTRICTED`, `MAINTENANCE_MODE`, `WITHDRAWAL_NOT_FOUND`, `WITHDRAWAL_NOT_PENDING`, `WITHDRAWAL_NOT_APPROVED`, `REASON_REQUIRED`, plus the wallet codes.
 
 ## How to test
 1. As a member with credited profit, call eligibility: `canRequest: true`, `availableProfit` above 0.
