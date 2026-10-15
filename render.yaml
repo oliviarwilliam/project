@@ -1,0 +1,83 @@
+# Render Blueprint. In Render: New, Blueprint, pick this repo. Values marked sync: false are
+# asked for once in the dashboard and never stored in git. See docs/deployment.md.
+
+envVarGroups:
+  - name: teenvest-shared
+    envVars:
+      # Generated once by Render. The web service and the cron jobs share the same value.
+      - key: CRON_SECRET
+        generateValue: true
+
+services:
+  # ---------------------------------------------------------------- web app
+  - type: web
+    name: teenvest
+    runtime: node
+    plan: starter            # production needs a paid plan: free instances sleep and cannot run cron reliably
+    region: frankfurt        # closest Render region to Nigeria. Keep Supabase in a nearby region too
+    branch: main
+    autoDeploy: true
+    # package-lock.json must be committed (npm ci needs it). --include=dev because the build needs
+    # TypeScript and Tailwind, and Render sets NODE_ENV=production which would skip them.
+    buildCommand: npm ci --include=dev && npm run security:check && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - fromGroup: teenvest-shared
+      - key: NODE_VERSION
+        value: 22
+      # Public values are baked into the build. Change one, then redeploy.
+      - key: NEXT_PUBLIC_SITE_URL         # https://your-domain.com (no trailing slash)
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
+      # Secrets
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      # Behaviour
+      - key: PAYSTACK_TRANSFERS_ENABLED   # keep false until the launch checklist is complete
+        value: "false"
+      - key: CSP_MODE                     # report-only first, then enforce
+        value: report-only
+      - key: TRUSTED_PROXY_HOPS           # how many proxies sit between the internet and the app
+        value: "1"
+      # - key: ALLOWED_ORIGINS            # extra origins allowed to call the API, comma separated
+      #   value: https://teenvest.onrender.com
+    # Optional: a custom domain. Add it in the dashboard (Settings, Custom Domains) or uncomment.
+    # domains:
+    #   - app.your-domain.com
+
+  # ------------------------------------------------- bank transfer job (every 10 minutes)
+  # Resumes stuck transfers, checks missing webhooks and retries failures. See docs/transfers.md.
+  - type: cron
+    name: teenvest-transfers
+    runtime: node
+    plan: starter
+    region: frankfurt
+    schedule: "*/10 * * * *"
+    buildCommand: echo "nothing to build"
+    startCommand: curl -fsS -X POST -H "Authorization: Bearer $CRON_SECRET" "$APP_URL/api/cron/transfers"
+    envVars:
+      - fromGroup: teenvest-shared
+      - key: APP_URL                      # same value as NEXT_PUBLIC_SITE_URL
+        sync: false
+
+  # ------------------------------------------- daily earnings (backup for pg_cron)
+  # The database already schedules this with pg_cron (migration 0013). Keep this job only if
+  # pg_cron is not available on your Supabase plan. Running both is safe, a day is never paid twice.
+  - type: cron
+    name: teenvest-daily-earnings
+    runtime: node
+    plan: starter
+    region: frankfurt
+    schedule: "5 0 * * *"                 # 00:05 UTC
+    buildCommand: echo "nothing to build"
+    startCommand: curl -fsS -X POST -H "Authorization: Bearer $CRON_SECRET" "$APP_URL/api/cron/daily-earnings"
+    envVars:
+      - fromGroup: teenvest-shared
+      - key: APP_URL
+        sync: false

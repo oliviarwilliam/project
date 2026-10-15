@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: 247 248 250;
+    --surface: 255 255 255;
+    --line: 224 228 236;
+    --ink: 20 29 51;
+    --muted: 92 102 125;
+    --brand: 31 84 214;
+    --brand-fg: 255 255 255;
+    --coin: 245 184 30;
+  }
+  .dark {
+    --bg: 13 19 36;
+    --surface: 21 29 52;
+    --line: 42 53 84;
+    --ink: 234 238 247;
+    --muted: 150 160 184;
+    --brand: 112 154 255;
+    --brand-fg: 13 19 36;
+    --coin: 245 184 30;
+  }
+
+  html { color-scheme: light; -webkit-text-size-adjust: 100%; }
+  html.dark { color-scheme: dark; }
+  body { @apply bg-bg font-sans text-ink antialiased; }
+  :focus-visible { @apply outline-2 outline-offset-2 outline-brand; outline-style: solid; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+}
+
+@layer components {
+  .container-page { @apply mx-auto w-full max-w-page px-4 sm:px-6 lg:px-8; }
+  .btn {
+    @apply inline-flex h-10 items-center justify-center rounded-lg px-4 text-sm font-semibold transition-colors disabled:opacity-60;
+  }
+  .btn-primary { @apply bg-brand text-brand-fg hover:opacity-90; }
+  .btn-ghost { @apply text-ink hover:bg-line/50; }
+  .input {
+    @apply h-11 w-full rounded-lg border border-line bg-surface px-3 text-sm placeholder:text-muted;
+  }
+}
