@@ -198,7 +198,7 @@ Open DevTools, Application, check the manifest and service worker, then try Offl
 .
 ├── middleware.ts                # CSRF check, CSP nonce, session refresh, page protection
 ├── next.config.ts               # security headers and cache rules
-├── render.yaml                  # Render blueprint (web service + two cron jobs)
+├── render.yaml                  # Render blueprint (one web service; Supabase runs schedules)
 ├── scripts/security-check.mjs   # the static security check
 ├── supabase/migrations/         # all database changes, in order (0001 ... 0017)
 ├── docs/                        # topic guides (see the index below)
@@ -376,7 +376,7 @@ Use `logger.info("event.name", { ...fields })` from `src/lib/logger.ts`. It prin
 | Type or lint errors on the very first build | Expected for never-compiled code. Fix them in small commits. |
 
 ## Deploying
-Production runs on Render (web service plus two cron jobs) with Supabase and Paystack. The full walkthrough, including the smoke test and go-live checklist, is in `docs/deployment.md`. The blueprint is `render.yaml`.
+Production runs on one Render web service with Supabase handling database, authentication, and scheduled jobs, plus Paystack for payments. The full walkthrough, including the smoke test and go-live checklist, is in `docs/deployment.md`. The blueprint is `render.yaml`.
 
 Short version: build and test locally, apply migrations to production Supabase, create the first admin, deploy the blueprint, set the environment variables, run the smoke test, then switch `CSP_MODE=enforce`, and only then enable `PAYSTACK_TRANSFERS_ENABLED`.
 

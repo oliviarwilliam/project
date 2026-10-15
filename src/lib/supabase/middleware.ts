@@ -1,4 +1,4 @@
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
 import { AUTH_ONLY_ROUTES, PROTECTED_ROUTES } from "@/data/routes";
@@ -18,7 +18,7 @@ export async function updateSession(request: NextRequest, extraHeaders: Record<s
   const supabase = createServerClient(env.supabaseUrl, env.supabaseAnonKey, {
     cookies: {
       getAll: () => request.cookies.getAll(),
-      setAll(list) {
+      setAll(list: { name: string; value: string; options: CookieOptions }[]) {
         list.forEach(({ name, value }) => request.cookies.set(name, value));
         response = next();
         list.forEach(({ name, value, options }) => response.cookies.set(name, value, options));

@@ -85,9 +85,9 @@ Not ready to take real money yet. The code has **never been compiled or run**: t
 - [ ] `PAYSTACK_TRANSFERS_ENABLED=true` only after a test transfer works end to end
 
 ## Render
-- [ ] Blueprint deployed from `render.yaml`, paid plan, health check green
+- [ ] Blueprint deployed from `render.yaml` with one Free web service, health check green
 - [ ] Custom domain with HTTPS; `NEXT_PUBLIC_SITE_URL` set to it **before** the build
-- [ ] `APP_URL` set on both cron jobs
+- [ ] Supabase Vault contains `teenvest_app_url` and matching `teenvest_cron_secret`; `cron.job` lists daily earnings and transfer follow-up schedules
 - [ ] Rate limit address check: trigger a block and confirm the logged address is the visitor's, not the proxy's
 - [ ] Deploy and error notifications going to a person who will read them
 - [ ] After a clean smoke test with no CSP violations in the logs: `CSP_MODE=enforce`

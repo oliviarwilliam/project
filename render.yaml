@@ -1,19 +1,12 @@
-# Render Blueprint. In Render: New, Blueprint, pick this repo. Values marked sync: false are
-# asked for once in the dashboard and never stored in git. See docs/deployment.md.
-
-envVarGroups:
-  - name: teenvest-shared
-    envVars:
-      # Generated once by Render. The web service and the cron jobs share the same value.
-      - key: CRON_SECRET
-        generateValue: true
+# Render Blueprint. This provisions one web service; Supabase runs scheduled jobs.
+# See docs/deployment.md for setup and Supabase Vault configuration.
 
 services:
   # ---------------------------------------------------------------- web app
   - type: web
     name: teenvest
     runtime: node
-    plan: starter            # production needs a paid plan: free instances sleep and cannot run cron reliably
+    plan: free               # Supabase runs the scheduled jobs; Render only hosts the web app
     region: frankfurt        # closest Render region to Nigeria. Keep Supabase in a nearby region too
     branch: main
     autoDeploy: true
@@ -23,7 +16,6 @@ services:
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
-      - fromGroup: teenvest-shared
       - key: NODE_VERSION
         value: 22
       # Public values are baked into the build. Change one, then redeploy.
@@ -38,6 +30,9 @@ services:
         sync: false
       - key: PAYSTACK_SECRET_KEY
         sync: false
+      # Copy this generated value into Supabase Vault as teenvest_cron_secret.
+      - key: CRON_SECRET
+        generateValue: true
       # Behaviour
       - key: PAYSTACK_TRANSFERS_ENABLED   # keep false until the launch checklist is complete
         value: "false"
@@ -51,33 +46,3 @@ services:
     # domains:
     #   - app.your-domain.com
 
-  # ------------------------------------------------- bank transfer job (every 10 minutes)
-  # Resumes stuck transfers, checks missing webhooks and retries failures. See docs/transfers.md.
-  - type: cron
-    name: teenvest-transfers
-    runtime: node
-    plan: starter
-    region: frankfurt
-    schedule: "*/10 * * * *"
-    buildCommand: echo "nothing to build"
-    startCommand: curl -fsS -X POST -H "Authorization: Bearer $CRON_SECRET" "$APP_URL/api/cron/transfers"
-    envVars:
-      - fromGroup: teenvest-shared
-      - key: APP_URL                      # same value as NEXT_PUBLIC_SITE_URL
-        sync: false
-
-  # ------------------------------------------- daily earnings (backup for pg_cron)
-  # The database already schedules this with pg_cron (migration 0013). Keep this job only if
-  # pg_cron is not available on your Supabase plan. Running both is safe, a day is never paid twice.
-  - type: cron
-    name: teenvest-daily-earnings
-    runtime: node
-    plan: starter
-    region: frankfurt
-    schedule: "5 0 * * *"                 # 00:05 UTC
-    buildCommand: echo "nothing to build"
-    startCommand: curl -fsS -X POST -H "Authorization: Bearer $CRON_SECRET" "$APP_URL/api/cron/daily-earnings"
-    envVars:
-      - fromGroup: teenvest-shared
-      - key: APP_URL
-        sync: false
