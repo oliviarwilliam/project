@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { RegisterServiceWorker } from "@/components/pwa/register-sw";
+import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { site } from "@/data/site";
 import { env } from "@/lib/env";
 import { headers } from "next/headers";
@@ -50,6 +51,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <Footer />
         </ThemeProvider>
         <RegisterServiceWorker />
+        <InstallPrompt />
       </body>
     </html>
   );
