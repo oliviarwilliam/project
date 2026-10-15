@@ -45,7 +45,7 @@ export function SettingsForm({ initial }: { initial: Values }) {
   return (
     <form onSubmit={submit} noValidate className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className={label}>Minimum withdrawal<input inputMode="decimal" value={v.min} onChange={(e) => setV({ ...v, min: e.target.value })} className="input mt-1 tabular-nums" /></label>
+        <label className={label}>Minimum withdrawal (NGN)<input inputMode="decimal" min="5000" value={v.min} onChange={(e) => setV({ ...v, min: e.target.value })} className="input mt-1 tabular-nums" /><span className="mt-1 block text-xs font-normal text-muted">Can be increased, with a minimum setting of ₦5,000.</span></label>
         <label className={label}>Days between withdrawals<input inputMode="numeric" value={v.days} onChange={(e) => setV({ ...v, days: e.target.value })} className="input mt-1 tabular-nums" /><span className="mt-1 block text-xs font-normal text-muted">0 turns the limit off</span></label>
         <label className={label}>Withdrawal fee (%)<input inputMode="decimal" value={v.fee} onChange={(e) => setV({ ...v, fee: e.target.value })} className="input mt-1 tabular-nums" /></label>
         <label className={label}>Referral reward (NGN)<input inputMode="decimal" min="0" max="1000000" value={v.referralReward} onChange={(e) => setV({ ...v, referralReward: e.target.value })} className="input mt-1 tabular-nums" /><span className="mt-1 block text-xs font-normal text-muted">Credited after each referred member makes their first wallet deposit. Set to 0 to disable rewards.</span></label>

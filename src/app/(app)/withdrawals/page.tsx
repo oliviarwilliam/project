@@ -9,14 +9,6 @@ import * as withdrawalService from "@/services/withdrawals";
 
 export const metadata = { title: "Withdrawals" };
 
-const BLOCKED: Record<string, string> = {
-  ACCOUNT_RESTRICTED: "Your account cannot make withdrawals right now.",
-  MAINTENANCE_MODE: "Withdrawals are paused for maintenance. Try again later.",
-  PROFILE_INCOMPLETE: "Add your date of birth in your profile before withdrawing.",
-  REFERRALS_REQUIRED: "Refer 10 people who verify their email before requesting a withdrawal.",
-  NO_PROFIT_AVAILABLE: "You do not have enough profit to withdraw yet. Only profit can be withdrawn.",
-};
-
 export default async function WithdrawalsPage() {
   const db = await createClient();
   const { data } = await db.auth.getUser();
@@ -35,38 +27,57 @@ export default async function WithdrawalsPage() {
       ? { bankName: profile.bankName, accountNumber: profile.accountNumber, accountName: profile.accountName }
       : null;
 
-  const notice =
-    rules?.blocked_by === "WITHDRAWAL_COOLDOWN" && rules.next_eligible_at
-      ? `You can request one withdrawal every ${rules.cooldown_days} days. Your next one opens on ${shortDate(rules.next_eligible_at)}.`
-      : rules?.blocked_by
-        ? (BLOCKED[rules.blocked_by] ?? "You cannot request a withdrawal right now.")
-        : null;
-
   return (
     <>
       <PageHeader title="Withdrawals" subtitle={`Withdrawable profit: ${money(rules?.available_profit ?? 0, currency)}`} />
 
       <div className="grid gap-6 lg:grid-cols-5">
         <Card className="lg:col-span-2">
-          <h2 className="mb-1 font-semibold">Request a withdrawal</h2>
+          <h2 className="mb-1 font-semibold">Withdraw</h2>
           {rules && (
             <p className="mb-4 text-sm text-muted">
-              Only profit can be withdrawn, once every {rules.cooldown_days} days. Minimum {money(rules.min_amount, currency)}. Every request is reviewed by our team.
+              Withdraw from your eligible profit.
             </p>
           )}
           {!bank ? (
             <EmptyState icon="user" title="Add your bank details" text="We need a bank account before we can send money to you." href="/profile" cta="Go to profile" />
-          ) : notice || !rules ? (
-            <p role="status" className="rounded-xl bg-line/40 p-4 text-sm">
-              {rules?.blocked_by === "PROFILE_INCOMPLETE" ? (
-                <>Add your date of birth in <Link href="/profile" className="font-medium underline">your profile</Link> to check withdrawal eligibility.</>
-              ) : rules?.blocked_by === "REFERRALS_REQUIRED" ? (
-                <>You have referred {rules.qualified_referrals} of {rules.required_referrals} required people. <Link href="/referrals" className="font-medium underline">Invite more people</Link></>
-              ) : notice ?? "We could not load your withdrawal details. Try again shortly."}
-            </p>
+          ) : !rules ? (
+            <div role="status" className="rounded-xl bg-line/40 p-4 text-sm">
+              We could not load your withdrawal details. Try again shortly.
+            </div>
           ) : (
-            <WithdrawForm available={rules.available_profit} currency={currency} min={rules.min_amount} feePercent={rules.fee_percent} bank={bank} />
+            <WithdrawForm currency={currency} feePercent={rules.fee_percent} bank={bank} />
           )}
+          {rules && (() => {
+            const qualified = Math.max(0, rules.qualified_referrals);
+            const required = Math.max(1, rules.required_referrals);
+            const progress = Math.min(100, Math.round((qualified / required) * 100));
+
+            return (
+              <section className="mt-5 rounded-2xl border border-line bg-surface p-4" aria-label="Referral progress">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="font-semibold">Referral progress</h3>
+                    <p className="mt-1 text-sm text-muted">Earn ₦1,000 for each funded referral.</p>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-brand/10 px-3 py-1 text-sm font-semibold tabular-nums text-brand">
+                    {qualified}/{required}
+                  </span>
+                </div>
+                <div
+                  className="mt-4 h-2 overflow-hidden rounded-full bg-line"
+                  role="progressbar"
+                  aria-label="Funded referral progress"
+                  aria-valuemin={0}
+                  aria-valuemax={required}
+                  aria-valuenow={Math.min(qualified, required)}
+                >
+                  <div className="h-full rounded-full bg-brand transition-[width]" style={{ width: `${progress}%` }} />
+                </div>
+                <Link href="/referrals" className="btn btn-secondary mt-4 w-full">Invite people</Link>
+              </section>
+            );
+          })()}
           {inReview.length > 0 && (
             <p className="mt-4 text-sm text-muted">
               {inReview.length} in review, {money(inReview.reduce((s, w) => s + w.amount, 0), currency)} in total.

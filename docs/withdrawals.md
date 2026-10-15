@@ -13,12 +13,12 @@ All of this is one database transaction.
 | --- | --- |
 | Profit balance only | Available profit = profit credited (ledger type `earning`) minus profit already requested (pending, approved, processing, paid), capped at the wallet balance. Over the limit gives `EXCEEDS_PROFIT_BALANCE`. Rejected requests give the profit back. |
 | Once every 7 days | No other request (not rejected or cancelled) in the last `withdrawal_cooldown_days`. Gives `WITHDRAWAL_COOLDOWN`. The wallet lock stops two requests sent at once from both passing. |
+| Minimum amount | ₦5,000 per request. Enforced by eligibility and the database withdrawal transaction. The admin setting can raise this floor but not lower it. |
 | Admin approval required | Status starts `pending`. Only `withdrawal_review` (approve or reject) and `withdrawal_mark_paid` move it on, and only finance staff and admins can call them. |
-| Minimum configurable | `min_withdrawal_amount` setting. Below it gives `BELOW_MIN_WITHDRAWAL`. |
 | Also checked | Account active, not in maintenance mode, date of birth set, and the referral requirement. |
 
 ## Settings (admin)
-`PATCH /api/admin/settings/withdrawals` with any of `minWithdrawalAmount`, `withdrawalCooldownDays` (0 to 90, 0 turns the limit off), `withdrawalFeePercent` (0 to 50). Changes are range checked and audited. `GET` returns the current values.
+`PATCH /api/admin/settings/withdrawals` with any of `minWithdrawalAmount` (₦5,000 or more), `withdrawalCooldownDays` (0 to 90, 0 turns the limit off), `withdrawalFeePercent` (0 to 50). Changes are range checked and audited. `GET` returns the current values.
 
 ## API
 | Method and path | Who | Purpose |
@@ -36,7 +36,7 @@ All of this is one database transaction.
 `{ "error": { "code", "message" } }`. Codes: `EXCEEDS_PROFIT_BALANCE`, `WITHDRAWAL_COOLDOWN`, `BELOW_MIN_WITHDRAWAL`, `PROFILE_INCOMPLETE`, `REFERRALS_REQUIRED`, `ACCOUNT_RESTRICTED`, `MAINTENANCE_MODE`, `WITHDRAWAL_NOT_FOUND`, `WITHDRAWAL_NOT_PENDING`, `WITHDRAWAL_NOT_APPROVED`, `REASON_REQUIRED`, plus the wallet codes.
 
 ## How to test
-1. As a member with credited profit, call eligibility: `canRequest: true`, `availableProfit` above 0.
+1. As a member with credited profit, call eligibility: `canRequest: true`, `availableProfit` at least ₦5,000.
 2. Request more than `availableProfit`: `EXCEEDS_PROFIT_BALANCE`. Request a valid amount: one `pending` row, one ledger debit, admin notifications.
 3. Request again: `WITHDRAWAL_COOLDOWN`. Eligibility shows `nextEligibleAt`.
 4. Admin rejects with a reason: the wallet gets a `refund` credit, the request is `rejected`, and the member can request again at once.

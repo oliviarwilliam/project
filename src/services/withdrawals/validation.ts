@@ -23,7 +23,7 @@ export function parseSettings(body: Record<string, unknown>): { key: string; val
 
   if (body.minWithdrawalAmount !== undefined) {
     const n = Number(body.minWithdrawalAmount);
-    if (!Number.isFinite(n) || n < 0) throw invalid("minWithdrawalAmount must be 0 or more.");
+    if (!Number.isFinite(n) || n < 5000) throw invalid("Minimum withdrawal cannot be set below 5000 NGN.");
     out.push({ key: "min_withdrawal_amount", value: n === 0 ? 0 : parseAmount(n) });
   }
   if (body.withdrawalCooldownDays !== undefined) {

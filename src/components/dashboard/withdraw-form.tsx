@@ -6,14 +6,12 @@ import { money } from "@/lib/format";
 import { postWallet } from "@/lib/wallet-api";
 
 type Props = {
-  available: number;
   currency: string;
-  min: number;
   feePercent: number;
   bank: { bankName: string; accountNumber: string; accountName: string };
 };
 
-export function WithdrawForm({ available, currency, min, feePercent, bank }: Props) {
+export function WithdrawForm({ currency, feePercent, bank }: Props) {
   const router = useRouter();
   const key = useRef<string | null>(null);
   const [amount, setAmount] = useState("");
@@ -29,8 +27,6 @@ export function WithdrawForm({ available, currency, min, feePercent, bank }: Pro
     setError(null);
     setDone(false);
     if (!(value > 0)) return setError("Enter an amount.");
-    if (value < min) return setError(`The minimum withdrawal is ${money(min, currency)}.`);
-    if (value > available) return setError("That is more than your withdrawable profit.");
 
     setBusy(true);
     key.current ??= crypto.randomUUID();
@@ -71,7 +67,7 @@ export function WithdrawForm({ available, currency, min, feePercent, bank }: Pro
       </dl>
       {error && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       {done && <p role="status" className="text-sm text-emerald-600 dark:text-emerald-300">Request sent. We will review it soon.</p>}
-      <button type="submit" disabled={busy} className="btn btn-primary h-11 w-full">{busy ? "Sending..." : "Request withdrawal"}</button>
+      <button type="submit" disabled={busy} className="btn btn-primary h-11 w-full">{busy ? "Processing..." : "Withdraw"}</button>
     </form>
   );
 }
