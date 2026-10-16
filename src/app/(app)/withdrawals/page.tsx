@@ -38,7 +38,7 @@ export default async function WithdrawalsPage() {
           <h2 className="mb-1 font-semibold">Withdraw</h2>
           {rules && (
             <p className="mb-4 text-sm text-muted">
-              Withdraw investment profit when eligible. 
+              Withdraw investment profit. 
             </p>
           )}
           {!bank ? (
