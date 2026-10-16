@@ -54,7 +54,7 @@ export function FundWalletCard({ currency, min, max, presets }: Props) {
         </div>
         {error && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p>}
         <button type="submit" disabled={busy} className="btn btn-primary h-11 w-full sm:w-auto sm:px-8">
-          {busy ? "Redirecting to Paystack..." : "Continue to payment"}
+          {busy ? "Redirecting to Paystack..." : "Add money"}
         </button>
       </form>
     </Card>
