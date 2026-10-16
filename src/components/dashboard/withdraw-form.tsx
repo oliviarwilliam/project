@@ -8,10 +8,11 @@ import { postWallet } from "@/lib/wallet-api";
 type Props = {
   currency: string;
   feePercent: number;
+  fundingSource: "profit" | "referral";
   bank: { bankName: string; accountNumber: string; accountName: string };
 };
 
-export function WithdrawForm({ currency, feePercent, bank }: Props) {
+export function WithdrawForm({ currency, feePercent, fundingSource, bank }: Props) {
   const router = useRouter();
   const key = useRef<string | null>(null);
   const [amount, setAmount] = useState("");
@@ -34,6 +35,7 @@ export function WithdrawForm({ currency, feePercent, bank }: Props) {
       await postWallet("/api/wallet/withdrawals", {
         amount: value,
         currency,
+        fundingSource,
         method: "bank",
         destination: { bank_name: bank.bankName, account_number: bank.accountNumber, account_name: bank.accountName },
       }, key.current);
@@ -61,12 +63,13 @@ export function WithdrawForm({ currency, feePercent, bank }: Props) {
         />
       </label>
       <dl className="space-y-1 rounded-xl bg-line/40 p-3 text-sm">
+        <div className="flex justify-between"><dt className="text-muted">From</dt><dd>{fundingSource === "profit" ? "Investment profit" : "Referral rewards"}</dd></div>
         <div className="flex justify-between"><dt className="text-muted">Paid to</dt><dd>{bank.bankName} •••• {bank.accountNumber.slice(-4)}</dd></div>
         <div className="flex justify-between"><dt className="text-muted">Fee ({feePercent}%)</dt><dd className="tabular-nums">{money(fee, currency)}</dd></div>
         <div className="flex justify-between font-semibold"><dt>You receive</dt><dd className="tabular-nums">{money(Math.max(value - fee, 0) || 0, currency)}</dd></div>
       </dl>
       {error && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-      {done && <p role="status" className="text-sm text-emerald-600 dark:text-emerald-300">Request sent. We will review it soon.</p>}
+      {done && <p role="status" className="text-sm text-emerald-600 dark:text-emerald-300">Withdrawal submitted. We will review it soon.</p>}
       <button type="submit" disabled={busy} className="btn btn-primary h-11 w-full">{busy ? "Processing..." : "Withdraw"}</button>
     </form>
   );

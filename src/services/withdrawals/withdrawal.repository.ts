@@ -6,7 +6,7 @@ import type { Eligibility, WithdrawalRow, WithdrawalStatus } from "./types";
 // Member reads use the member's own client (row level security). Everything else is service role.
 const db = () => createAdminClient();
 const COLUMNS =
-  "id, user_id, wallet_id, amount, fee, net_amount, method, destination, status, rejection_reason, external_reference, reviewed_at, processed_at, created_at";
+  "id, user_id, wallet_id, amount, fee, net_amount, method, funding_source, destination, status, rejection_reason, external_reference, reviewed_at, processed_at, created_at";
 
 async function rpc<T>(name: string, args: Record<string, unknown>): Promise<T> {
   const { data, error } = await db().rpc(name, args);
@@ -55,7 +55,7 @@ export const updateSetting = (adminId: string, key: string, value: number | bool
 
 export async function readSettings() {
   const { data, error } = await db().from("settings").select("key, value")
-    .in("key", ["min_withdrawal_amount", "withdrawal_cooldown_days", "withdrawal_fee_percent", "referral_reward_amount", "maintenance_mode"])
+    .in("key", ["min_withdrawal_amount", "withdrawal_cooldown_days", "withdrawal_fee_percent", "referral_reward_amount", "required_funded_referrals", "maintenance_mode"])
     .is("deleted_at", null);
   if (error) throw fromDbError(error);
   const map = new Map((data ?? []).map((r) => [r.key as string, r.value]));
@@ -64,6 +64,7 @@ export async function readSettings() {
     withdrawalCooldownDays: Number(map.get("withdrawal_cooldown_days") ?? 7),
     withdrawalFeePercent: Number(map.get("withdrawal_fee_percent") ?? 0),
     referralRewardAmount: Number(map.get("referral_reward_amount") ?? 1000),
+    requiredFundedReferrals: Number(map.get("required_funded_referrals") ?? 10),
     maintenanceMode: map.get("maintenance_mode") === true,
   };
 }

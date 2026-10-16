@@ -5,6 +5,7 @@ import { PENDING_STATUSES, getWithdrawals } from "@/lib/dashboard/queries";
 import { money, shortDate } from "@/lib/format";
 import { getProfile } from "@/lib/profile";
 import { createClient } from "@/lib/supabase/server";
+import { getReferralSummary } from "@/services/referrals/referral.service";
 import * as withdrawalService from "@/services/withdrawals";
 
 export const metadata = { title: "Withdrawals" };
@@ -14,10 +15,11 @@ export default async function WithdrawalsPage() {
   const { data } = await db.auth.getUser();
   const userId = data.user?.id ?? "";
 
-  const [profile, history, rules] = await Promise.all([
+  const [profile, history, rules, referralSummary] = await Promise.all([
     getProfile(db, userId),
     getWithdrawals(db),
     withdrawalService.getEligibility(userId).catch(() => null),
+    getReferralSummary(userId),
   ]);
 
   const currency = rules?.currency ?? "NGN";
@@ -36,7 +38,7 @@ export default async function WithdrawalsPage() {
           <h2 className="mb-1 font-semibold">Withdraw</h2>
           {rules && (
             <p className="mb-4 text-sm text-muted">
-              Withdraw from your eligible profit.
+              Withdraw investment profit when eligible. 
             </p>
           )}
           {!bank ? (
@@ -46,19 +48,22 @@ export default async function WithdrawalsPage() {
               We could not load your withdrawal details. Try again shortly.
             </div>
           ) : (
-            <WithdrawForm currency={currency} feePercent={rules.fee_percent} bank={bank} />
+            <WithdrawForm currency={currency} feePercent={rules.fee_percent} fundingSource="profit" bank={bank} />
           )}
           {rules && (() => {
             const qualified = Math.max(0, rules.qualified_referrals);
             const required = Math.max(1, rules.required_referrals);
             const progress = Math.min(100, Math.round((qualified / required) * 100));
+            const unlocked = qualified >= required;
+            const rewardAmount = Number.isFinite(referralSummary.rewardAmount) ? referralSummary.rewardAmount : 1000;
+            const referralRewardsBalance = Number.isFinite(rules.referral_rewards_balance) ? rules.referral_rewards_balance : 0;
 
             return (
               <section className="mt-5 rounded-2xl border border-line bg-surface p-4" aria-label="Referral progress">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h3 className="font-semibold">Referral progress</h3>
-                    <p className="mt-1 text-sm text-muted">Earn ₦1,000 for each funded referral.</p>
+                    <p className="mt-1 text-sm text-muted">Earn {money(rewardAmount, currency)} for each funded referral.</p>
                   </div>
                   <span className="shrink-0 rounded-full bg-brand/10 px-3 py-1 text-sm font-semibold tabular-nums text-brand">
                     {qualified}/{required}
@@ -74,7 +79,20 @@ export default async function WithdrawalsPage() {
                 >
                   <div className="h-full rounded-full bg-brand transition-[width]" style={{ width: `${progress}%` }} />
                 </div>
+                <p className="mt-3 text-sm text-muted">
+                  Referral rewards: {money(referralRewardsBalance, currency)}
+                  {unlocked ? " available to withdraw separately." : ` locked until ${required} funded referrals.`}
+                </p>
+                {rules.next_referral_eligible_at && (
+                  <p className="mt-1 text-sm text-muted">Next referral withdrawal date: {shortDate(rules.next_referral_eligible_at)}</p>
+                )}
                 <Link href="/referrals" className="btn btn-secondary mt-4 w-full">Invite people</Link>
+                {unlocked && bank && (
+                  <div className="mt-5 border-t border-line pt-5">
+                    <h4 className="mb-3 font-semibold">Withdraw referral rewards</h4>
+                    <WithdrawForm currency={currency} feePercent={rules.fee_percent} fundingSource="referral" bank={bank} />
+                  </div>
+                )}
               </section>
             );
           })()}
@@ -96,7 +114,7 @@ export default async function WithdrawalsPage() {
                   <div className="min-w-0">
                     <p className="text-sm font-semibold tabular-nums">{money(w.amount, currency)}</p>
                     <p className="truncate text-xs text-muted">
-                      {shortDate(w.created_at)} · {w.method}
+                      {shortDate(w.created_at)} · {w.method} · {w.funding_source === "referral" ? "Referral rewards" : "Profit"}
                       {w.rejection_reason ? ` · ${w.rejection_reason}` : ""}
                     </p>
                   </div>

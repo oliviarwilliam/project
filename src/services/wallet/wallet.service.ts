@@ -1,10 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { WalletError, type WalletErrorCode } from "./errors";
 import * as repo from "./wallet.repository";
+import * as withdrawalRepo from "@/services/withdrawals/withdrawal.repository";
+import type { Eligibility } from "@/services/withdrawals/types";
 import type { Page, Wallet, WalletSummary, WalletTransaction } from "./types";
 import {
   decodeCursor, encodeCursor, parseAmount, parseCurrency, parseDestination, parseDirection,
-  parseIdempotencyKey, parseLimit, parseText, parseTxnType, parseUuid,
+  parseIdempotencyKey, parseLimit, parseText, parseTxnType, parseUuid, parseWithdrawalSource,
 } from "./validation";
 
 // Keys are scoped by user and action, so one member can never replay another's request.
@@ -61,15 +63,59 @@ export function purchasePackage(userId: string, input: { packageId: unknown; ide
 
 export function requestWithdrawal(
   userId: string,
-  input: { amount: unknown; currency?: unknown; method: unknown; destination: unknown; idempotencyKey: string | null },
+  input: { amount: unknown; currency?: unknown; method: unknown; destination: unknown; idempotencyKey: string | null; fundingSource?: unknown },
 ) {
+  const currency = input.currency === undefined ? "NGN" : parseCurrency(input.currency);
+  const fundingSource = parseWithdrawalSource(input.fundingSource);
+  const amount = parseAmount(input.amount);
   return repo.requestWithdrawal({
     userId,
-    currency: input.currency === undefined ? "NGN" : parseCurrency(input.currency),
-    amount: parseAmount(input.amount),
+    currency,
+    amount,
     method: parseText(input.method, "method", 2, 40),
     destination: parseDestination(input.destination),
     key: scopeKey(userId, "withdrawal", parseIdempotencyKey(input.idempotencyKey)),
+    fundingSource,
+  }).catch(async (error: unknown) => {
+    if (!(error instanceof WalletError)) throw error;
+
+    // The database remains authoritative. Read the same eligibility snapshot only
+    // when needed to make its reason actionable for the member.
+    let eligibility: Eligibility | null = null;
+    if (["WITHDRAWAL_COOLDOWN", "BELOW_MIN_WITHDRAWAL", "NO_PROFIT_AVAILABLE", "EXCEEDS_PROFIT_BALANCE", "REFERRALS_REQUIRED", "REFERRAL_REWARD_INSUFFICIENT"].includes(error.code)) {
+      try {
+        eligibility = await withdrawalRepo.eligibility(userId, currency);
+      } catch {
+        // Keep the original, safe error if the supplementary eligibility read fails.
+      }
+    }
+
+    const date = (value: string | null | undefined) => value
+      ? new Intl.DateTimeFormat("en-NG", { dateStyle: "long", timeStyle: "short", timeZone: "Africa/Lagos" }).format(new Date(value))
+      : null;
+    const naira = (value: number) => `₦${new Intl.NumberFormat("en-NG", { maximumFractionDigits: 2 }).format(value)}`;
+
+    if (error.code === "WITHDRAWAL_COOLDOWN") {
+      const nextDate = date(fundingSource === "referral" ? eligibility?.next_referral_eligible_at : eligibility?.next_eligible_at);
+      if (nextDate) throw new WalletError(error.code, `Your next ${fundingSource} withdrawal is available on ${nextDate}.`);
+    }
+    if (error.code === "BELOW_MIN_WITHDRAWAL" && eligibility) {
+      throw new WalletError(error.code, `Enter at least ${naira(eligibility.min_amount)} to withdraw.`);
+    }
+    if (error.code === "NO_PROFIT_AVAILABLE" && eligibility) {
+      throw new WalletError(error.code, `Your available profit is ${naira(eligibility.available_profit)}. Wait until it reaches the minimum withdrawal amount of ${naira(eligibility.min_amount)} before withdrawing.`);
+    }
+    if (error.code === "EXCEEDS_PROFIT_BALANCE" && eligibility) {
+      throw new WalletError(error.code, `Your available profit is ${naira(eligibility.available_profit)}, below the ${naira(amount)} you entered. Wait until your available profit reaches ${naira(amount)} before withdrawing.`);
+    }
+    if (error.code === "REFERRALS_REQUIRED" && eligibility) {
+      const remaining = Math.max(0, eligibility.required_referrals - eligibility.qualified_referrals);
+      throw new WalletError(error.code, `You have ${eligibility.qualified_referrals} of ${eligibility.required_referrals} funded referrals. ${remaining} more are needed to withdraw referral rewards.`);
+    }
+    if (error.code === "REFERRAL_REWARD_INSUFFICIENT" && eligibility) {
+      throw new WalletError(error.code, `Your available referral rewards are ${naira(eligibility.available_referral_rewards)}. Enter that amount or less.`);
+    }
+    throw error;
   });
 }
 

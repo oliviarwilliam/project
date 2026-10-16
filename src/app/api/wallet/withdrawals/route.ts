@@ -11,9 +11,9 @@ export const GET = route(async (request: NextRequest) => {
 });
 
 // POST /api/wallet/withdrawals   Header: Idempotency-Key
-// { "amount": 25, "currency": "NGN", "method": "bank", "destination": {...} }
-// The database enforces: profit only, one request per cooldown, minimum, then creates a
-// pending request and notifies admins. Check GET .../eligibility first to show the member why not.
+// { "amount": 25, "currency": "NGN", "fundingSource": "profit" | "referral", ... }
+// The database enforces the source-specific balance, referral unlock, cooldown and minimum,
+// then creates a pending request and notifies admins.
 export const POST = route(async (request: NextRequest) => {
   const { user } = await requireUser();
   const body = await readJson(request);
@@ -22,6 +22,7 @@ export const POST = route(async (request: NextRequest) => {
     currency: body.currency,
     method: body.method,
     destination: body.destination,
+    fundingSource: body.fundingSource,
     idempotencyKey: request.headers.get("idempotency-key"),
   });
   return ok(result, 201);

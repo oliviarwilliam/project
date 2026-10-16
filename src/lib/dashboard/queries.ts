@@ -12,7 +12,7 @@ export type CatalogPackage = {
   return_rate: number; payout_interval_days: number; duration_days: number;
 };
 export type Withdrawal = {
-  id: string; amount: number; fee: number; net_amount: number; method: string;
+  id: string; amount: number; fee: number; net_amount: number; method: string; funding_source: "profit" | "referral";
   status: string; rejection_reason: string | null; created_at: string;
 };
 export type AppNotification = {
@@ -43,7 +43,7 @@ export async function getCatalog(db: SupabaseClient): Promise<CatalogPackage[]> 
 export async function getWithdrawals(db: SupabaseClient): Promise<Withdrawal[]> {
   const { data } = await db
     .from("withdrawals")
-    .select("id, amount, fee, net_amount, method, status, rejection_reason, created_at")
+    .select("id, amount, fee, net_amount, method, funding_source, status, rejection_reason, created_at")
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .limit(50);

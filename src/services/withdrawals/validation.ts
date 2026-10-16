@@ -23,7 +23,7 @@ export function parseSettings(body: Record<string, unknown>): { key: string; val
 
   if (body.minWithdrawalAmount !== undefined) {
     const n = Number(body.minWithdrawalAmount);
-    if (!Number.isFinite(n) || n < 5000) throw invalid("Minimum withdrawal cannot be set below 5000 NGN.");
+    if (!Number.isFinite(n) || n < 0 || n > 1000000) throw invalid("Minimum withdrawal must be from 0 to 1,000,000 NGN.");
     out.push({ key: "min_withdrawal_amount", value: n === 0 ? 0 : parseAmount(n) });
   }
   if (body.withdrawalCooldownDays !== undefined) {
@@ -40,6 +40,11 @@ export function parseSettings(body: Record<string, unknown>): { key: string; val
     const n = Number(body.referralRewardAmount);
     if (!Number.isFinite(n) || n < 0) throw invalid("referralRewardAmount must be 0 or more.");
     out.push({ key: "referral_reward_amount", value: n === 0 ? 0 : parseAmount(n) });
+  }
+  if (body.requiredFundedReferrals !== undefined) {
+    const n = Number(body.requiredFundedReferrals);
+    if (!Number.isInteger(n) || n < 0 || n > 1000) throw invalid("requiredFundedReferrals must be a whole number from 0 to 1,000.");
+    out.push({ key: "required_funded_referrals", value: n });
   }
   if (body.maintenanceMode !== undefined) {
     if (typeof body.maintenanceMode !== "boolean") throw invalid("maintenanceMode must be true or false.");

@@ -48,11 +48,11 @@ Reads run as the signed in member, so row level security applies. Writes call da
 
 Purchase, withdrawal and adjustment calls need an `Idempotency-Key` header. Generate one id per user action and reuse it on retries.
 
-Responses are `{ "data": ... }` or `{ "error": { "code", "message" } }`. Error codes include `INSUFFICIENT_FUNDS`, `BELOW_MIN_WITHDRAWAL`, `PACKAGE_LIMIT_REACHED`, `REFERRALS_REQUIRED` and `MAINTENANCE_MODE`.
+Responses are `{ "data": ... }` or `{ "error": { "code", "message" } }`. Error codes include `INSUFFICIENT_FUNDS`, `BELOW_MIN_WITHDRAWAL`, `PACKAGE_LIMIT_REACHED`, `REFERRALS_REQUIRED` (referral rewards only) and `MAINTENANCE_MODE`.
 
 ## Rules worth knowing
 
-- A withdrawal debits the wallet straight away and creates a `pending` request. The fee is stored on the request and taken from the payout, not added to the debit.
-- Withdrawals need a date of birth and at least 10 qualified referrals.
+- A profit withdrawal is held from the wallet straight away. A referral reward withdrawal reserves the separate referral balance. Both create a `pending` request. The fee is stored on the request and taken from the payout, not added to the debit.
+- Profit withdrawals need a date of birth, eligible profit, and the configured cooldown; referrals are not required. Referral rewards are held separately and unlock after the admin-configured funded referral requirement is met.
 - A profit credit pays `amount x return_rate` once per payout interval. A package completes when the next payout would fall after its end date.
 - Withdrawal rules and admin review are in `docs/withdrawals.md`.

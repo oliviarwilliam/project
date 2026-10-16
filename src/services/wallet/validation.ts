@@ -63,6 +63,12 @@ export function parseDestination(value: unknown): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
+export function parseWithdrawalSource(value: unknown): "profit" | "referral" {
+  if (value === undefined || value === null || value === "") return "profit";
+  if (value === "profit" || value === "referral") return value;
+  throw invalid("Choose a valid withdrawal source.");
+}
+
 // Cursors are opaque to clients.
 export function encodeCursor(createdAt: string, id: string): string {
   return Buffer.from(JSON.stringify({ c: createdAt, i: id })).toString("base64url");

@@ -59,11 +59,12 @@ export const purchasePackage = (args: { userId: string; packageId: string; key: 
   });
 
 export const requestWithdrawal = (args: {
-  userId: string; currency: string; amount: number; method: string; destination: object; key: string;
+  userId: string; currency: string; amount: number; method: string; destination: object; key: string; fundingSource: "profit" | "referral";
 }) =>
-  rpc("wallet_request_withdrawal", {
+  rpc("wallet_request_withdrawal_v2", {
     p_user_id: args.userId, p_currency: args.currency, p_amount: args.amount,
     p_method: args.method, p_destination: args.destination, p_idempotency_key: args.key,
+    p_funding_source: args.fundingSource,
   });
 
 export const adminAdjust = (args: {

@@ -10,7 +10,7 @@ import { parseReason, parseReference, parseSettings, parseStatusFilter } from ".
 // function enforces the rules. This module adds the checks, history and admin review.
 
 const toWithdrawal = (r: WithdrawalRow): Withdrawal => ({
-  id: r.id, amount: Number(r.amount), fee: Number(r.fee), netAmount: Number(r.net_amount),
+  id: r.id, amount: Number(r.amount), fee: Number(r.fee), netAmount: Number(r.net_amount), fundingSource: r.funding_source,
   method: r.method, status: r.status, rejectionReason: r.rejection_reason,
   reviewedAt: r.reviewed_at, processedAt: r.processed_at, createdAt: r.created_at,
 });

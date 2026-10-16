@@ -11,10 +11,15 @@ export interface Eligibility {
   cooldown_days: number;
   last_request_at: string | null;
   next_eligible_at: string | null;
+  next_referral_eligible_at: string | null;
   can_request: boolean;
   blocked_by: string | null;
   qualified_referrals: number;
   required_referrals: number;
+  referral_reward_amount: number;
+  referral_rewards_balance: number;
+  available_referral_rewards: number;
+  locked_referral_rewards: number;
 }
 
 export interface WithdrawalRow {
@@ -24,6 +29,7 @@ export interface WithdrawalRow {
   amount: number | string;
   fee: number | string;
   net_amount: number | string;
+  funding_source: "profit" | "referral";
   method: string;
   destination: Record<string, unknown>;
   status: WithdrawalStatus;
@@ -39,6 +45,7 @@ export interface Withdrawal {
   amount: number;
   fee: number;
   netAmount: number;
+  fundingSource: "profit" | "referral";
   method: string;
   status: WithdrawalStatus;
   rejectionReason: string | null;

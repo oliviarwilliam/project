@@ -51,6 +51,7 @@ export default async function AdminWithdrawalsPage({ searchParams }: { searchPar
                   <StatusBadge status={w.status} />
                 </div>
                 <p className="mt-1 text-sm text-muted">Fee {money(w.fee, w.currency)} · member receives {money(w.netAmount, w.currency)}</p>
+                <p className="text-xs font-medium text-muted">Source: {w.fundingSource === "referral" ? "Referral rewards" : "Investment profit"}</p>
                 <Link href={`/admin/users/${w.userId}`} className="mt-2 block truncate text-sm font-medium text-brand">{w.userEmail ?? "View member"}</Link>
                 <p className="text-xs text-muted">Requested {shortDate(w.createdAt)}</p>
                 {latest.get(w.id) && <p className="mt-2 text-xs text-muted">{transferNote(latest.get(w.id) as TransferRow)}</p>}
