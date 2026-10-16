@@ -13,9 +13,9 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
   const ref = Array.isArray(search.ref) ? search.ref[0] : search.ref;
   const reward = await getReferralRewardAmount().catch(() => 1000);
   const formattedReward = formatReward(reward);
-  const title = reward > 0 ? `Join TeenVest — your friend earns ${formattedReward}` : "Join TeenVest";
+  const title = reward > 0 ? `Refer a friend who funds their wallet. Earn ${formattedReward}.` : "Join TeenVest";
   const description = reward > 0
-    ? `Your friend earns ${formattedReward} when you join TeenVest through this link and fund your wallet. Start building your financial knowledge today.`
+    ? `Join TeenVest and earn ${formattedReward} for each friend who signs up with your referral link and funds their wallet.`
     : "Join TeenVest to build your financial knowledge and grow good money habits.";
   const previewImage = `/api/referral-preview?amount=${encodeURIComponent(String(reward))}`;
 

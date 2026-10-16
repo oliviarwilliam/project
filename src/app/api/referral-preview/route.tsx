@@ -34,19 +34,24 @@ export async function GET(request: Request) {
           fontFamily: "Arial, sans-serif",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 14, fontSize: 28, fontWeight: 700 }}>
-          <div style={{ width: 18, height: 18, borderRadius: 9, background: "#9ff0d0" }} />
-          TeenVest
+        <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 30, fontWeight: 700 }}>
+          <div style={{ width: 64, height: 64, borderRadius: 18, background: "#2457df", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="46" height="46" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 44L25 27L36 37L53 18" stroke="white" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx="54" cy="16" r="9" fill="#FFC928" />
+            </svg>
+          </div>
+          <span>TeenVest</span>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
           <div style={{ color: "#b7f7df", fontSize: 24, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase" }}>
-            A little invite. A real reward.
+            Refer a friend. Get rewarded.
           </div>
           <div style={{ fontSize: 68, fontWeight: 800, lineHeight: 1.05, letterSpacing: -2 }}>
-            {hasReward ? `Your friend earns ${reward}` : "Grow your money know-how"}
+            {hasReward ? `Earn ${reward} per referral` : "Grow your money know-how"}
           </div>
           <div style={{ color: "#e4def5", fontSize: 30, lineHeight: 1.3 }}>
-            {hasReward ? "When you join TeenVest and fund your wallet" : "Join TeenVest and build good money habits"}
+            {hasReward ? "When your friend joins TeenVest and funds their wallet" : "Join TeenVest and build good money habits"}
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", color: "#d4c9ed", fontSize: 22 }}>
