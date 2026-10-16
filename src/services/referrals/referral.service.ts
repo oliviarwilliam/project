@@ -2,6 +2,14 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { fromDbError } from "@/services/wallet/errors";
 
+export async function getReferralRewardAmount() {
+  const { data, error } = await createAdminClient().from("settings").select("value")
+    .eq("key", "referral_reward_amount").is("deleted_at", null).maybeSingle();
+  if (error) throw fromDbError(error);
+  const amount = Number(data?.value ?? 1000);
+  return Number.isFinite(amount) ? amount : 1000;
+}
+
 export async function getReferralSummary(userId: string) {
   const db = createAdminClient();
   const [userResult, referralResult, settingResult] = await Promise.all([
