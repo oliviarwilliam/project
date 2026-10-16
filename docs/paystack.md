@@ -7,6 +7,20 @@
 4. Enable the wallet currency on your Paystack account. Funding limits live in `src/lib/payments/config.ts`.
 5. To test locally, expose the app with a tunnel and use the tunnel URL as the webhook and site URL.
 
+## Go live on Render
+
+Use test mode first and complete the payment checks below before switching the production service to live credentials. Paystack requires the business account to meet its activation and country-specific compliance requirements before it can process live transactions ([Paystack business activation](https://support.paystack.com/en/articles/2125506)).
+
+1. **Confirm the production site URL.** In Render, set `NEXT_PUBLIC_SITE_URL` to the exact public HTTPS origin members will use, without a trailing slash, for example `https://teenvest.onrender.com`. If you use a custom domain, use that instead. This value is compiled into the app during the build, so redeploy after changing it.
+2. **Copy the live secret key.** In the Paystack Dashboard, switch to Live Mode and copy the live secret key from **Settings → API Keys & Webhooks**. In the Render web service, set `PAYSTACK_SECRET_KEY` to the `sk_live_...` value, save it, and redeploy. The key is server-only: do not add it to `NEXT_PUBLIC_*`, source code, or this document. This app initializes and verifies checkout on the server and does not need a Paystack public key in its environment.
+3. **Register the live webhook.** In Paystack's Live Mode dashboard, set the webhook URL to `https://YOUR-PRODUCTION-DOMAIN/api/webhooks/paystack`. Use the same origin as `NEXT_PUBLIC_SITE_URL`. The endpoint handles wallet funding events and, when transfers are enabled, transfer events. Paystack recommends using webhooks to receive payment status updates ([Paystack webhooks](https://paystack.com/docs/payments/webhooks/)).
+4. **Keep automatic payouts disabled initially.** Leave `PAYSTACK_TRANSFERS_ENABLED=false` in Render while testing wallet deposits. After live funding works and the separate transfer launch checks in [transfers.md](transfers.md) and [security-checklist.md](security-checklist.md) are complete, enable transfers only if you want automatic bank payouts.
+5. **Deploy and check startup.** Confirm the Render deploy succeeds and review its logs for configuration warnings. A production service using an `sk_test_` key emits a warning; use the live key for real transactions.
+6. **Make one controlled live deposit.** Sign in with a real member account, fund a small amount you are prepared to charge, and complete Paystack checkout. Paystack redirects to `/wallet/fund/callback`; the app verifies the transaction with Paystack before crediting the wallet. Confirm the payment and wallet ledger show one successful credit. A browser redirect by itself is not proof of payment; Paystack also documents verifying transactions before delivering value ([Accept Payments](https://paystack.com/docs/payments/accept-payments/)).
+7. **Check webhook delivery.** In the Paystack Dashboard, review webhook delivery for the live transaction. Confirm Render returns a successful response and the corresponding payment is recorded once. The webhook route validates Paystack's signature, and duplicate callback/webhook deliveries are safe to retry.
+
+If the live payment does not complete, check that the Render secret key, site URL, Paystack mode, and webhook URL all belong to the same production setup. Never paste secret keys into logs, support messages, or screenshots. For key replacement, update the Render environment value and redeploy; see [environment.md](environment.md#rotation).
+
 ## Flow
 1. Member enters an amount on `/wallet` (`FundWalletCard`).
 2. `POST /api/wallet/fund` checks limits and rate, saves a `pending` row in `payments`, then calls Paystack Initialize with our own reference (`tv_...`).
